@@ -264,6 +264,28 @@
             margin-bottom: 20px;
             opacity: 0.5;
         }
+
+        #search-bar {
+            transition: all 0.3s;
+        }
+
+        #search-bar:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        #clear-search-btn:hover {
+            color: #667eea;
+            background: #f0f0f0;
+            border-radius: 50%;
+        }
+        .help-text code {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    color: #667eea;
+    font-weight: 600;
+}
     </style>
 </head>
 
@@ -301,10 +323,16 @@
                     <label>Fórmula</label>
                     <textarea id="calc-formula" placeholder="Ex: peso / (altura * altura)"></textarea>
                     <div class="help-text">
-                        <strong>Operadores disponíveis:</strong> +, -, *, /, ** (potência), sqrt() (raiz quadrada),
-                        abs() (valor absoluto), sin(), cos(), tan(), log(), exp()<br>
-                        <strong>Exemplo:</strong> sqrt(base ** 2 + altura ** 2)
-                    </div>
+    <strong>💡 Como escrever fórmulas:</strong><br>
+    • Use parênteses () para definir a ordem: <code>(kmf - kmi) * preço</code><br>
+    • Operadores: <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>**</code> (potência)<br>
+    • Funções: <code>sqrt(número)</code> <code>abs(número)</code> <code>sin()</code> <code>cos()</code> <code>tan()</code> <code>log()</code><br>
+    <strong>Exemplos:</strong><br>
+    • Combustível: <code>(kmf - kmi) * preço</code><br>
+    • IMC: <code>peso / (altura * altura)</code><br>
+    • Área círculo: <code>3.14159 * raio ** 2</code><br>
+    • Hipotenusa: <code>sqrt(a ** 2 + b ** 2)</code>
+</div>
                 </div>
 
                 <button class="btn" onclick="saveCalculator()">💾 Salvar Calculadora</button>
@@ -318,6 +346,15 @@
                     <input type="file" id="import-file" accept=".json" style="display: none;"
                         onchange="importCalculators(event)">
                 </div>
+                <!-- ADICIONAR ESTA SEÇÃO AQUI -->
+                <div style="position: relative; margin-bottom: 25px;">
+                    <input type="text" id="search-bar" placeholder="🔍 Buscar calculadora pelo nome..."
+                        style="padding-right: 40px;" oninput="filterCalculators(this.value)">
+                    <button onclick="clearSearch()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                       background: none; border: none; cursor: pointer; font-size: 20px; 
+                       color: #999; padding: 5px 10px; display: none;" id="clear-search-btn">×</button>
+                </div>
+                <!-- FIM DA ADIÇÃO -->
                 <div id="calculator-list" class="calculator-list">
                     <div class="empty-state">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -424,33 +461,73 @@
         }
 
         // Exibir calculadoras
+        // Exibir calculadoras
         function displayCalculators(calculators) {
             const listElement = document.getElementById('calculator-list');
 
             if (calculators.length === 0) {
                 listElement.innerHTML = `
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                        </svg>
-                        <p>Nenhuma calculadora salva ainda.<br>Crie sua primeira calculadora!</p>
-                    </div>
-                `;
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                <p>Nenhuma calculadora salva ainda.<br>Crie sua primeira calculadora!</p>
+            </div>
+        `;
                 return;
             }
 
-            listElement.innerHTML = calculators.map(calc => `
-                <div class="calculator-item">
-                    <h3>${calc.name}</h3>
-                    <p>${calc.description || 'Sem descrição'}</p>
-                    <div class="formula"><strong>Fórmula:</strong> ${calc.formula}</div>
-                    <div class="actions">
-    <button class="btn" onclick="useCalculator(${calc.id})">🧮 Usar</button>
-    <button class="btn" onclick="editCalculator(${calc.id})">✏️ Editar</button>
-    <button class="btn btn-danger" onclick="deleteCalculator(${calc.id})">🗑️ Excluir</button>
-</div>
+            // Ordenar por data de criação (mais recentes primeiro)
+            const sortedCalculators = calculators.sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0);
+                const dateB = new Date(b.createdAt || 0);
+                return dateB - dateA;
+            });
+
+            // Mostrar apenas as 3 mais recentes por padrão
+            const searchValue = document.getElementById('search-bar').value.toLowerCase();
+            let displayList = sortedCalculators;
+
+            if (searchValue) {
+                // Se houver busca, mostrar todos os resultados filtrados
+                displayList = sortedCalculators.filter(calc =>
+                    calc.name.toLowerCase().includes(searchValue)
+                );
+            } else {
+                // Se não houver busca, mostrar apenas as 3 últimas
+                displayList = sortedCalculators.slice(0, 3);
+            }
+
+            if (displayList.length === 0) {
+                listElement.innerHTML = `
+            <div class="empty-state">
+                <p>Nenhuma calculadora encontrada com "${searchValue}"</p>
+            </div>
+        `;
+                return;
+            }
+
+            const showingAll = searchValue !== '';
+            const totalCount = sortedCalculators.length;
+
+            listElement.innerHTML = `
+        ${!showingAll && totalCount > 3 ?
+                    `<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; color: #1565c0;">
+                Mostrando as 3 calculadoras mais recentes de ${totalCount} no total. Use a busca para encontrar outras.
+            </div>` : ''}
+        ${displayList.map(calc => `
+            <div class="calculator-item">
+                <h3>${calc.name}</h3>
+                <p>${calc.description || 'Sem descrição'}</p>
+                <div class="formula"><strong>Fórmula:</strong> ${calc.formula}</div>
+                <div class="actions">
+                    <button class="btn" onclick="useCalculator(${calc.id})">🧮 Usar</button>
+                    <button class="btn" onclick="editCalculator(${calc.id})">✏️ Editar</button>
+                    <button class="btn btn-danger" onclick="deleteCalculator(${calc.id})">🗑️ Excluir</button>
                 </div>
-            `).join('');
+            </div>
+        `).join('')}
+    `;
         }
 
         // Usar calculadora
@@ -493,57 +570,78 @@
         }
 
         // Calcular resultado
-        function calculate(id, variables, formula) {
-            const values = {};
-            let allFilled = true;
+        // Calcular resultado
+function calculate(id, variables, formula) {
+    const values = {};
+    let allFilled = true;
 
-            variables.forEach(variable => {
-                const input = document.getElementById(`var-${variable}`);
-                const value = parseFloat(input.value);
-
-                if (isNaN(value)) {
-                    allFilled = false;
-                } else {
-                    values[variable] = value;
-                }
-            });
-
-            if (!allFilled) {
-                alert('Por favor, preencha todos os campos');
-                return;
-            }
-
-            try {
-                // Substituir variáveis na fórmula
-                let processedFormula = formula;
-                Object.keys(values).forEach(variable => {
-                    const regex = new RegExp('\\b' + variable + '\\b', 'g');
-                    processedFormula = processedFormula.replace(regex, values[variable]);
-                });
-
-                // Funções matemáticas disponíveis
-                const sqrt = Math.sqrt;
-                const abs = Math.abs;
-                const sin = Math.sin;
-                const cos = Math.cos;
-                const tan = Math.tan;
-                const log = Math.log;
-                const exp = Math.exp;
-                const pow = Math.pow;
-
-                // Avaliar fórmula
-                const result = eval(processedFormula);
-
-                document.getElementById(`result-${id}`).innerHTML = `
-                    <div class="result-box">
-                        <h3>Resultado</h3>
-                        <div class="value">${result.toFixed(4)}</div>
-                    </div>
-                `;
-            } catch (error) {
-                alert('Erro ao calcular: ' + error.message);
-            }
+    variables.forEach(variable => {
+        const input = document.getElementById(`var-${variable}`);
+        const value = parseFloat(input.value);
+        
+        if (isNaN(value)) {
+            allFilled = false;
+        } else {
+            values[variable] = value;
         }
+    });
+
+    if (!allFilled) {
+        alert('Por favor, preencha todos os campos com números válidos');
+        return;
+    }
+
+    try {
+        // Substituir variáveis na fórmula
+        let processedFormula = formula;
+        
+        // Mostrar a fórmula com os valores substituídos para debug
+        let debugFormula = formula;
+        
+        Object.keys(values).forEach(variable => {
+            const regex = new RegExp('\\b' + variable + '\\b', 'g');
+            processedFormula = processedFormula.replace(regex, values[variable]);
+            debugFormula = debugFormula.replace(regex, `<strong>${values[variable]}</strong>`);
+        });
+
+        // Funções matemáticas disponíveis
+        const sqrt = Math.sqrt;
+        const abs = Math.abs;
+        const sin = Math.sin;
+        const cos = Math.cos;
+        const tan = Math.tan;
+        const log = Math.log;
+        const exp = Math.exp;
+        const pow = Math.pow;
+        const PI = Math.PI;
+
+        // Avaliar fórmula
+        const result = eval(processedFormula);
+
+        // Verificar se o resultado é válido
+        if (!isFinite(result)) {
+            alert('Erro: O resultado não é um número válido. Verifique sua fórmula e os valores inseridos.');
+            return;
+        }
+
+        document.getElementById(`result-${id}`).innerHTML = `
+            <div class="result-box">
+                <h3>Resultado</h3>
+                <div class="value">${result.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div style="margin-top: 15px; font-size: 14px; opacity: 0.9;">
+                    Cálculo: ${debugFormula} = ${result.toFixed(2)}
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('Erro ao calcular a fórmula!\n\n' + 
+              'Detalhes: ' + error.message + '\n\n' +
+              'Dicas:\n' +
+              '• Use parênteses para definir ordem: (kmf - kmi) * preço\n' +
+              '• Verifique se os nomes das variáveis estão corretos\n' +
+              '• Use * para multiplicação, não x ou ×');
+    }
+}
 
         // Deletar calculadora
         function deleteCalculator(id) {
@@ -694,6 +792,26 @@
                 }
             };
             reader.readAsText(file);
+        }
+        // Filtrar calculadoras
+        function filterCalculators(searchValue) {
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            // Mostrar/ocultar botão X
+            if (searchValue.trim()) {
+                clearBtn.style.display = 'block';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+
+            loadCalculators();
+        }
+
+        // Limpar busca
+        function clearSearch() {
+            document.getElementById('search-bar').value = '';
+            document.getElementById('clear-search-btn').style.display = 'none';
+            loadCalculators();
         }
 
         // Inicializar ao carregar a página
