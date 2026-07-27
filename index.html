@@ -1,822 +1,1390 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Fórmulas</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2B6E5E">
+<title>Caderno de Cálculo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
+<style>
+  /* ===================== TOKENS (claro) ===================== */
+  :root{
+    --bg:#F1F5F0; --bg-alt:#E7EDE5; --surface:#FFFFFF; --surface-2:#FBFCF9;
+    --ink:#1F2A24; --ink-soft:#5B6B62; --line:#D8E0D4;
+    --accent:#2B6E5E; --accent-ink:#163B31; --accent-contraste:#FFFFFF;
+    --brass:#B8862E; --brass-ink:#5C3F13;
+    --danger:#B23A34; --danger-bg:#F7E4E2;
+    --lcd-bg:#16241D; --lcd-fg:#8FF0C0; --lcd-fg-dim:#4F7C68;
+    --radius-sm:6px; --radius:12px; --radius-lg:20px;
+    --shadow:0 1px 2px rgba(20,30,25,.07), 0 6px 18px rgba(20,30,25,.08);
+    --font-display:Georgia,'Iowan Old Style','Palatino Linotype',serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+  }
+  [data-theme="dark"]{
+    --bg:#141915; --bg-alt:#1B221C; --surface:#1E251F; --surface-2:#232B25;
+    --ink:#E7EEE7; --ink-soft:#9AAA9F; --line:#303A32;
+    --accent:#59B99B; --accent-ink:#DFF7EC; --accent-contraste:#0F1A15;
+    --brass:#D9A94B; --brass-ink:#2A2013;
+    --danger:#E27A73; --danger-bg:#3A211F;
+    --lcd-bg:#0B140E; --lcd-fg:#7CE8B5; --lcd-fg-dim:#3D5B4C;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.4);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141915; --bg-alt:#1B221C; --surface:#1E251F; --surface-2:#232B25;
+      --ink:#E7EEE7; --ink-soft:#9AAA9F; --line:#303A32;
+      --accent:#59B99B; --accent-ink:#DFF7EC; --accent-contraste:#0F1A15;
+      --brass:#D9A94B; --brass-ink:#2A2013;
+      --danger:#E27A73; --danger-bg:#3A211F;
+      --lcd-bg:#0B140E; --lcd-fg:#7CE8B5; --lcd-fg-dim:#3D5B4C;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.4);
+    }
+  }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    background-image:radial-gradient(var(--line) 1px, transparent 1px);
+    background-size:20px 20px;
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-tap-highlight-color:transparent;
+    min-height:100vh;
+  }
+  #app{max-width:560px;margin:0 auto;min-height:100vh;background:transparent;position:relative;}
+  button,input,select,textarea{font-family:inherit;color:inherit;}
+  button{cursor:pointer;background:none;border:none;}
+  a{color:var(--accent);}
+  ::selection{background:var(--accent);color:var(--accent-contraste);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001s !important;transition-duration:.001s !important;}
+  }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #666;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab:hover {
-            color: #667eea;
-        }
-
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            font-weight: 600;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        input,
-        textarea,
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            margin-left: 10px;
-        }
-
-        .calculator-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .calculator-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .calculator-item:hover {
-            border-color: #667eea;
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .calculator-item h3 {
-            color: #667eea;
-            margin-bottom: 8px;
-        }
-
-        .calculator-item p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .calculator-item .formula {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #333;
-            margin-top: 10px;
-        }
-
-        .calculator-item .actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .calculator-item .btn {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-
-        .input-fields {
-            display: grid;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .result-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .result-box h3 {
-            margin-bottom: 10px;
-        }
-
-        .result-box .value {
-            font-size: 2em;
-            font-weight: bold;
-        }
-
-        .help-text {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #1565c0;
-        }
-
-        .variable-input {
-            background: white;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .variable-input label {
-            color: #667eea;
-            font-size: 14px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        #search-bar {
-            transition: all 0.3s;
-        }
-
-        #search-bar:focus {
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-
-        #clear-search-btn:hover {
-            color: #667eea;
-            background: #f0f0f0;
-            border-radius: 50%;
-        }
-        .help-text code {
-    background: rgba(102, 126, 234, 0.1);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: 'Courier New', monospace;
-    color: #667eea;
-    font-weight: 600;
+  .view{display:none;padding-bottom:96px;}
+  .view.ativa{display:block;}
+  .scroll-area {
+    overflow: scroll;
+    padding: 4px 16px 24px;
+    max-height: 540px;
 }
-    </style>
+
+  /* ===================== TOPBAR ===================== */
+  .topbar{
+    position:sticky;top:0;z-index:5;
+    display:flex;align-items:center;gap:8px;
+    padding:calc(14px + env(safe-area-inset-top)) 12px 12px 16px;
+    background:linear-gradient(var(--bg) 85%, transparent);
+  }
+  .topbar h1{
+    flex:1;font-family:var(--font-display);font-size:1.25rem;font-weight:700;
+    margin:0;letter-spacing:.2px;
+  }
+  #editor-titulo, #usar-titulo{font-size:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .icon-btn{
+    width:40px;height:40px;border-radius:50%;font-size:1.2rem;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);flex-shrink:0;
+  }
+  .icon-btn:active{background:var(--bg-alt);}
+  .icon-btn.pequeno{width:32px;height:32px;font-size:1rem;color:var(--ink-soft);}
+
+  /* ===================== BUSCA & CHIPS ===================== */
+  .busca-area {
+    left: 54px;
+    bottom: 25px;
+    position: fixed;
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 10px;
+}
+  .busca-area input[type="text"]{
+    flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);
+    border-radius:var(--radius);background:var(--surface);font-size:.95rem;
+  }
+  .busca-area select{
+    border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);
+    padding:0 8px;font-size:.85rem;max-width:132px;
+  }
+  .chip-row{display:flex;gap:8px;overflow-x:auto;padding: 9px 6px 4px;margin: 2px 12px 0px 12px;scrollbar-width:none;}
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip-cat{
+    flex-shrink:0;padding:7px 14px;border-radius:999px;font-size:.82rem;
+    border:1.5px solid var(--cor-cat, var(--line));color:var(--ink-soft);
+    background:var(--surface);white-space:nowrap;
+  }
+  .chip-cat.ativo{background:var(--cor-cat, var(--accent));border-color:var(--cor-cat, var(--accent));color:#fff;font-weight:600;}
+
+  /* ===================== CARDS ===================== */
+  .calc-card{
+    background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+    margin-bottom:12px;border-left:5px solid var(--cor-cat, var(--accent));overflow:hidden;
+  }
+  .calc-card-corpo{padding:14px 14px 12px 16px;}
+  .calc-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .calc-card-cat{font-size:.72rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 9px;border-radius:999px;}
+  .calc-card-nome{font-family:var(--font-display);font-size:1.12rem;margin:8px 0 2px;font-weight:700;}
+  .calc-card-desc{margin:0 0 6px;color:var(--ink-soft);font-size:.88rem;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .calc-card-meta{margin:0;font-size:.76rem;color:var(--ink-soft);font-family:var(--font-mono);}
+
+  .vazio{text-align:center;padding:48px 20px;color:var(--ink-soft);}
+  .vazio-titulo{font-family:var(--font-display);font-size:1.25rem;color:var(--ink);margin-bottom:6px;}
+  .vazio-texto{font-size:.92rem;margin-bottom:20px;line-height:1.5;}
+  .vazio .btn-primario{margin-bottom:10px;width:100%;max-width:280px;}
+  .vazio .btn-secundario{width:100%;max-width:280px;}
+  .vazio-mini{color:var(--ink-soft);font-size:.86rem;padding:10px 2px;}
+
+  /* ===================== FAB ===================== */
+  .fab{
+    position:fixed;bottom:calc(25px + env(safe-area-inset-bottom));left:10px;
+    width:58px;height:58px;border-radius:50%;background:var(--brass);color:#fff;
+    font-size:1.8rem;line-height:1;box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:center;z-index:6;
+    max-width:calc(560px - 48px);
+  }
+  .fab:active{transform:scale(.94);}
+
+  /* ===================== FORM GENÉRICO ===================== */
+  .campo-label{display:block;font-size:.82rem;color:var(--ink-soft);font-weight:600;margin-bottom:12px;}
+  .campo-label input,.campo-label select,.campo-label textarea{
+    display:block;width:100%;margin-top:6px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:var(--radius-sm);background:var(--surface);color:var(--ink);font-size:.98rem;font-weight:400;
+  }
+  .campo-label textarea{resize:vertical;min-height:44px;}
+  .campo-label input.erro{border-color:var(--danger);background:var(--danger-bg);}
+  .mono{font-family:var(--font-mono) !important;font-size:.88rem !important;}
+  .linha-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .linha-3col{display:grid;grid-template-columns:1.3fr 1fr .8fr;gap:8px;}
+
+  .btn-primario,.btn-secundario,.btn-fantasma,.btn-tracejado{
+    padding:13px 18px;border-radius:var(--radius);font-size:.96rem;font-weight:700;text-align:center;
+  }
+  .btn-primario{background:var(--accent);color:var(--accent-contraste);}
+  .btn-primario:active{opacity:.85;}
+  .btn-secundario{background:var(--surface);color:var(--ink);border:1.5px solid var(--line);}
+  .btn-fantasma{background:transparent;color:var(--ink-soft);font-weight:600;}
+  .btn-tracejado{
+    width:100%;background:transparent;border:1.5px dashed var(--line);color:var(--accent);
+    font-weight:600;margin:4px 0 22px;
+  }
+  .btn-tracejado.pequeno{padding:8px;font-size:.85rem;margin:6px 0 4px;}
+  .cor-perigo{color:var(--danger) !important;}
+
+  /* ===================== EDITOR ===================== */
+  .secao-divisor{
+    display:flex;align-items:center;gap:10px;margin:26px 0 6px;
+    color:var(--ink-soft);font-size:.74rem;font-weight:700;letter-spacing:1px;
+  }
+  .secao-divisor::before,.secao-divisor::after{content:"";flex:1;border-top:1.5px dashed var(--line);}
+  .dica{font-size:.82rem;color:var(--ink-soft);line-height:1.5;margin:0 0 12px;}
+  .item-row{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 12px 4px;margin-bottom:12px;
+  }
+  .item-row-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .item-num{font-size:.72rem;font-weight:700;letter-spacing:.5px;color:var(--ink-soft);text-transform:uppercase;}
+  .item-row-acoes{display:flex;gap:2px;}
+  .item-row-acoes button{width:28px;height:28px;border-radius:6px;font-size:.95rem;color:var(--ink-soft);}
+  .item-row-acoes button:active{background:var(--bg-alt);}
+  .opcoes-lista{margin:6px 0 14px;padding:10px;background:var(--bg);border-radius:var(--radius-sm);}
+  .opcao-row{display:grid;grid-template-columns:1.2fr 1fr 30px;gap:6px;align-items:center;margin-bottom:8px;}
+  .opcao-row input{padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);font-size:.88rem;}
+  .opcao-row button{color:var(--danger);font-size:1rem;}
+  .chips-vars{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px;}
+  .chip{padding:5px 11px;border-radius:999px;background:var(--bg);border:1px solid var(--line);
+    font-family:var(--font-mono);font-size:.78rem;color:var(--accent-ink);}
+  .chip:active{background:var(--accent);color:#fff;}
+  .erro-formula{color:var(--danger);font-size:.82rem;margin:-8px 0 12px;}
+  .teste-ok{background:var(--danger-bg);background:color-mix(in srgb, var(--accent) 14%, var(--surface));
+    border:1px solid var(--accent);color:var(--accent-ink);padding:12px;border-radius:var(--radius-sm);font-size:.88rem;margin:12px 0 4px;}
+  .teste-erro{background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);
+    padding:12px;border-radius:var(--radius-sm);font-size:.88rem;margin:12px 0 4px;}
+
+  .barra-acoes{
+    position:fixed;bottom:0;left:0;right:0;max-width:560px;margin:0 auto;
+    display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:var(--bg);border-top:1px solid var(--line);z-index:4;
+  }
+  .barra-acoes .btn-fantasma{flex:0 0 auto;}
+  .barra-acoes .btn-primario{flex:1;}
+
+  /* ===================== USAR / RESULTADO ===================== */
+  .descricao-calc{color:var(--ink-soft);font-size:.9rem;margin:0 0 14px;line-height:1.45;}
+  .btn-calcular{width:100%;margin:10px 0 20px;font-size:1.02rem;padding:15px;}
+  #area-resultados{opacity:0;transform:translateY(8px);transition:opacity .28s ease, transform .28s ease;}
+  #area-resultados.mostrar{opacity:1;transform:translateY(0);}
+  .resultado-lcd{
+    background:var(--lcd-bg);border-radius:var(--radius);padding:16px 18px;margin-bottom:10px;
+  }
+  .resultado-lcd.principal{padding:20px 18px;}
+  .lcd-rotulo{
+    font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--lcd-fg-dim);margin-bottom:6px;font-weight:600;
+  }
+  .lcd-valor{font-family:var(--font-mono);color:var(--lcd-fg);font-size:1.9rem;font-weight:600;word-break:break-word;}
+  .resultado-lcd.secundario .lcd-valor{font-size:1.3rem;}
+  .resultados-secundarios{display:grid;gap:10px;}
+  .historico-detalhes{margin-top:22px;}
+  .historico-detalhes summary{font-size:.86rem;font-weight:700;color:var(--ink-soft);cursor:pointer;padding:6px 0;}
+  .historico-lista{margin:10px 0;}
+  .historico-item{padding:10px 0;border-bottom:1px solid var(--line);}
+  .historico-data{font-size:.72rem;color:var(--ink-soft);font-family:var(--font-mono);margin-bottom:3px;}
+  .historico-resumo{font-size:.86rem;}
+
+  /* ===================== OVERLAY / SHEET / TOAST ===================== */
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,15,12,.45);z-index:20;
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;transition:opacity .2s ease;
+  }
+  .overlay.mostrar{opacity:1;}
+  .overlay[hidden]{display:none;}
+  .sheet{
+    width:100%;max-width:560px;background:var(--surface);border-radius:20px 20px 0 0;
+    padding:10px 16px calc(20px + env(safe-area-inset-bottom));
+    transform:translateY(16px);transition:transform .2s ease;box-shadow:0 -8px 30px rgba(0,0,0,.2);
+  }
+  .overlay.mostrar .sheet{transform:translateY(0);}
+  .sheet-alca{width:36px;height:4px;background:var(--line);border-radius:99px;margin:6px auto 14px;}
+  .sheet-titulo{font-family:var(--font-display);font-weight:700;font-size:1.05rem;padding:2px 4px 12px;}
+  .sheet-mensagem{font-size:.9rem;color:var(--ink-soft);padding:0 4px 16px;line-height:1.5;}
+  .sheet-item{
+    display:block;width:100%;text-align:left;padding:14px 8px;font-size:.98rem;
+    border-top:1px solid var(--line);
+  }
+  .sheet-item:first-of-type{border-top:none;}
+  .sheet-cancelar{color:var(--ink-soft);font-weight:600;}
+  .toast{
+    position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,10px);
+    background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;font-size:.88rem;
+    z-index:30;opacity:0;transition:opacity .2s ease, transform .2s ease;max-width:86%;text-align:center;
+    box-shadow:var(--shadow);
+  }
+  [data-theme="dark"] .toast{background:var(--surface);color:var(--ink);border:1px solid var(--line);}
+  .toast.erro{background:var(--danger);color:#fff;}
+  .toast.mostrar{opacity:1;transform:translate(-50%,0);}
+</style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📐 Calculadora de Fórmulas</h1>
-            <p>Crie e salve suas calculadoras personalizadas</p>
-        </div>
+<div id="app">
 
-        <div class="content">
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('create')">Criar Nova</button>
-                <button class="tab" onclick="switchTab('saved')">Minhas Calculadoras</button>
-            </div>
-
-            <!-- ABA: Criar Nova Calculadora -->
-            <div id="create-tab" class="tab-content active">
-                <div class="form-group">
-                    <label>Nome da Calculadora</label>
-                    <input type="text" id="calc-name" placeholder="Ex: Cálculo de IMC">
-                </div>
-
-                <div class="form-group">
-                    <label>Descrição</label>
-                    <textarea id="calc-description" placeholder="Descreva para que serve esta calculadora"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Variáveis (separadas por vírgula)</label>
-                    <input type="text" id="calc-variables" placeholder="Ex: peso, altura, idade">
-                </div>
-
-                <div class="form-group">
-                    <label>Fórmula</label>
-                    <textarea id="calc-formula" placeholder="Ex: peso / (altura * altura)"></textarea>
-                    <div class="help-text">
-    <strong>💡 Como escrever fórmulas:</strong><br>
-    • Use parênteses () para definir a ordem: <code>(kmf - kmi) * preço</code><br>
-    • Operadores: <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>**</code> (potência)<br>
-    • Funções: <code>sqrt(número)</code> <code>abs(número)</code> <code>sin()</code> <code>cos()</code> <code>tan()</code> <code>log()</code><br>
-    <strong>Exemplos:</strong><br>
-    • Combustível: <code>(kmf - kmi) * preço</code><br>
-    • IMC: <code>peso / (altura * altura)</code><br>
-    • Área círculo: <code>3.14159 * raio ** 2</code><br>
-    • Hipotenusa: <code>sqrt(a ** 2 + b ** 2)</code>
-</div>
-                </div>
-
-                <button class="btn" onclick="saveCalculator()">💾 Salvar Calculadora</button>
-            </div>
-
-            <!-- ABA: Calculadoras Salvas -->
-            <div id="saved-tab" class="tab-content">
-                <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                    <button class="btn" onclick="exportCalculators()">📤 Exportar Todas</button>
-                    <button class="btn" onclick="document.getElementById('import-file').click()">📥 Importar</button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;"
-                        onchange="importCalculators(event)">
-                </div>
-                <!-- ADICIONAR ESTA SEÇÃO AQUI -->
-                <div style="position: relative; margin-bottom: 25px;">
-                    <input type="text" id="search-bar" placeholder="🔍 Buscar calculadora pelo nome..."
-                        style="padding-right: 40px;" oninput="filterCalculators(this.value)">
-                    <button onclick="clearSearch()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
-                       background: none; border: none; cursor: pointer; font-size: 20px; 
-                       color: #999; padding: 5px 10px; display: none;" id="clear-search-btn">×</button>
-                </div>
-                <!-- FIM DA ADIÇÃO -->
-                <div id="calculator-list" class="calculator-list">
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                        <p>Nenhuma calculadora salva ainda.<br>Crie sua primeira calculadora!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- ===================== VIEW: LISTA ===================== -->
+  <section id="view-lista" class="view">
+    <header class="topbar">
+      <h1>🧮 Caderno de Cálculo</h1>
+      <button class="icon-btn" id="btn-menu" aria-label="Mais opções">⋯</button>
+    </header>
+    <div class="busca-area">
+      <input type="text" id="busca" placeholder="Buscar calculadora...">
+      <select id="ordenacao" aria-label="Ordenar por">
+        <option value="recentes">Recentes</option>
+        <option value="nome">Nome A-Z</option>
+        <option value="usadas">Mais usadas</option>
+      </select>
     </div>
+    
+    <div class="scroll-area">
+      <div id="lista-cards"></div>
+    </div>
+    <div id="chips-categorias" class="chip-row"></div>
+  </section>
 
-    <script>
-        let db;
-        const DB_NAME = 'FormulaCalculatorDB';
-        const STORE_NAME = 'calculators';
+  <!-- ===================== VIEW: EDITOR ===================== -->
+  <section id="view-editor" class="view">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-editor-voltar" aria-label="Voltar">←</button>
+      <h1 id="editor-titulo">Nova calculadora</h1>
+      <span style="width:40px"></span>
+    </header>
+    <div class="scroll-area">
+      <form id="form-editor" novalidate onsubmit="return false;">
+        <label class="campo-label">Nome da calculadora
+          <input type="text" id="ed-nome" placeholder="Ex.: Consumo de combustível">
+        </label>
+        <label class="campo-label">Descrição (opcional)
+          <textarea id="ed-descricao" rows="2" placeholder="Para que serve essa calculadora?"></textarea>
+        </label>
+        <label class="campo-label">Categoria
+          <input type="text" id="ed-categoria" list="lista-categorias" placeholder="Ex.: Veículos, Saúde, Finanças...">
+          <datalist id="lista-categorias"></datalist>
+        </label>
 
-        // Inicializar IndexedDB
-        function initDB() {
-            const request = indexedDB.open(DB_NAME, 1);
+        <div class="secao-divisor"><span>CAMPOS DE ENTRADA</span></div>
+        <p class="dica">O que você vai preencher toda vez que usar essa calculadora.</p>
+        <div id="lista-campos"></div>
+        <button type="button" class="btn-tracejado" id="btn-add-campo">+ Adicionar campo</button>
 
-            request.onerror = () => {
-                alert('Erro ao abrir o banco de dados');
-            };
+        <div class="secao-divisor"><span>RESULTADOS</span></div>
+        <p class="dica">O que a calculadora vai calcular e mostrar. Toque nos "chips" abaixo da fórmula para inserir uma variável. Funções como Math.round(), Math.sqrt(), Math.pow(), Math.min(), Math.max() também funcionam.</p>
+        <div id="lista-resultados"></div>
+        <button type="button" class="btn-tracejado" id="btn-add-resultado">+ Adicionar resultado</button>
 
-            request.onsuccess = (event) => {
-                db = event.target.result;
-                loadCalculators();
-            };
+        <div class="secao-divisor"><span>TESTAR</span></div>
+        <button type="button" class="btn-secundario" id="btn-testar" style="width:100%">Testar com valores de exemplo</button>
+        <div id="area-teste"></div>
+        <div style="height:8px"></div>
+      </form>
+    </div>
+    <div class="barra-acoes">
+      <button type="button" class="btn-fantasma" id="btn-editor-cancelar">Cancelar</button>
+      <button type="button" class="btn-primario" id="btn-editor-salvar">Salvar calculadora</button>
+    </div>
+  </section>
 
-            request.onupgradeneeded = (event) => {
-                db = event.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                }
-            };
-        }
+  <!-- ===================== VIEW: USAR ===================== -->
+  <section id="view-usar" class="view">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-usar-voltar" aria-label="Voltar">←</button>
+      <h1 id="usar-titulo">Calculadora</h1>
+      <button class="icon-btn" id="btn-usar-menu" aria-label="Mais opções">⋮</button>
+    </header>
+    <div class="scroll-area">
+      <p id="usar-descricao" class="descricao-calc"></p>
+      <form id="form-usar" onsubmit="return false;"></form>
+      <button type="button" class="btn-primario btn-calcular" id="btn-calcular">Calcular</button>
+      <div id="area-resultados"></div>
+      <div id="area-historico"></div>
+    </div>
+  </section>
 
-        // Alternar abas
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  <button id="fab" class="fab" aria-label="Nova calculadora">+</button>
+  <input type="file" id="input-importar" accept="application/json,.json" hidden>
 
-            event.target.classList.add('active');
-            document.getElementById(tabName + '-tab').classList.add('active');
+  <div id="overlay" class="overlay" hidden>
+    <div id="sheet" class="sheet" role="dialog" aria-modal="true">
+      <div class="sheet-alca"></div>
+      <div id="sheet-conteudo"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+</div>
 
-            if (tabName === 'saved') {
-                loadCalculators();
-            } else if (tabName === 'create') {
-                resetForm(); // ADICIONAR ESTA LINHA
-            }
-        }
+<script>
+(function(){
+"use strict";
 
-        // Salvar calculadora
-        function saveCalculator() {
-            const name = document.getElementById('calc-name').value.trim();
-            const description = document.getElementById('calc-description').value.trim();
-            const variables = document.getElementById('calc-variables').value.trim();
-            const formula = document.getElementById('calc-formula').value.trim();
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
+const estado = {
+  calculadoras: [],
+  filtroTexto: '',
+  filtroCategoria: null,
+  ordenacao: 'recentes',
+  rascunho: null,
+  usando: null
+};
+let voltarAlvoEditor = 'lista';
 
-            if (!name || !variables || !formula) {
-                alert('Por favor, preencha todos os campos obrigatórios');
-                return;
-            }
+/* ============================================================
+   INDEXEDDB
+   ============================================================ */
+const DB_NOME = 'CadernoCalculoDB';
+const DB_VERSAO = 1;
+let dbPromise = null;
 
-            const calculator = {
-                name,
-                description,
-                variables: variables.split(',').map(v => v.trim()),
-                formula,
-                createdAt: new Date().toISOString()
-            };
-
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.add(calculator);
-
-            request.onsuccess = () => {
-                alert('Calculadora salva com sucesso!');
-                document.getElementById('calc-name').value = '';
-                document.getElementById('calc-description').value = '';
-                document.getElementById('calc-variables').value = '';
-                document.getElementById('calc-formula').value = '';
-                loadCalculators();
-            };
-
-            request.onerror = () => {
-                alert('Erro ao salvar calculadora');
-            };
-        }
-
-        // Carregar calculadoras
-        function loadCalculators() {
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.getAll();
-
-            request.onsuccess = (event) => {
-                const calculators = event.target.result;
-                displayCalculators(calculators);
-            };
-        }
-
-        // Exibir calculadoras
-        // Exibir calculadoras
-        function displayCalculators(calculators) {
-            const listElement = document.getElementById('calculator-list');
-
-            if (calculators.length === 0) {
-                listElement.innerHTML = `
-            <div class="empty-state">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                </svg>
-                <p>Nenhuma calculadora salva ainda.<br>Crie sua primeira calculadora!</p>
-            </div>
-        `;
-                return;
-            }
-
-            // Ordenar por data de criação (mais recentes primeiro)
-            const sortedCalculators = calculators.sort((a, b) => {
-                const dateA = new Date(a.createdAt || 0);
-                const dateB = new Date(b.createdAt || 0);
-                return dateB - dateA;
-            });
-
-            // Mostrar apenas as 3 mais recentes por padrão
-            const searchValue = document.getElementById('search-bar').value.toLowerCase();
-            let displayList = sortedCalculators;
-
-            if (searchValue) {
-                // Se houver busca, mostrar todos os resultados filtrados
-                displayList = sortedCalculators.filter(calc =>
-                    calc.name.toLowerCase().includes(searchValue)
-                );
-            } else {
-                // Se não houver busca, mostrar apenas as 3 últimas
-                displayList = sortedCalculators.slice(0, 3);
-            }
-
-            if (displayList.length === 0) {
-                listElement.innerHTML = `
-            <div class="empty-state">
-                <p>Nenhuma calculadora encontrada com "${searchValue}"</p>
-            </div>
-        `;
-                return;
-            }
-
-            const showingAll = searchValue !== '';
-            const totalCount = sortedCalculators.length;
-
-            listElement.innerHTML = `
-        ${!showingAll && totalCount > 3 ?
-                    `<div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; color: #1565c0;">
-                Mostrando as 3 calculadoras mais recentes de ${totalCount} no total. Use a busca para encontrar outras.
-            </div>` : ''}
-        ${displayList.map(calc => `
-            <div class="calculator-item">
-                <h3>${calc.name}</h3>
-                <p>${calc.description || 'Sem descrição'}</p>
-                <div class="formula"><strong>Fórmula:</strong> ${calc.formula}</div>
-                <div class="actions">
-                    <button class="btn" onclick="useCalculator(${calc.id})">🧮 Usar</button>
-                    <button class="btn" onclick="editCalculator(${calc.id})">✏️ Editar</button>
-                    <button class="btn btn-danger" onclick="deleteCalculator(${calc.id})">🗑️ Excluir</button>
-                </div>
-            </div>
-        `).join('')}
-    `;
-        }
-
-        // Usar calculadora
-        function useCalculator(id) {
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.get(id);
-
-            request.onsuccess = (event) => {
-                const calc = event.target.result;
-                showCalculatorInterface(calc);
-            };
-        }
-
-        // Mostrar interface de cálculo
-        function showCalculatorInterface(calc) {
-            const listElement = document.getElementById('calculator-list');
-
-            listElement.innerHTML = `
-                <div style="max-width: 600px; margin: 0 auto;">
-                    <button class="btn" onclick="loadCalculators()" style="margin-bottom: 20px;">← Voltar</button>
-                    <h2 style="color: #667eea; margin-bottom: 10px;">${calc.name}</h2>
-                    <p style="color: #666; margin-bottom: 20px;">${calc.description || ''}</p>
-                    <div class="formula" style="margin-bottom: 20px;"><strong>Fórmula:</strong> ${calc.formula}</div>
-                    
-                    <div class="input-fields" id="input-fields-${calc.id}">
-                        ${calc.variables.map(variable => `
-                            <div class="variable-input">
-                                <label>${variable}</label>
-                                <input type="number" id="var-${variable}" step="any" placeholder="Digite o valor">
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    <button class="btn" onclick="calculate(${calc.id}, ${JSON.stringify(calc.variables).replace(/"/g, '&quot;')}, '${calc.formula.replace(/'/g, "\\'")}')">Calcular</button>
-                    
-                    <div id="result-${calc.id}"></div>
-                </div>
-            `;
-        }
-
-        // Calcular resultado
-        // Calcular resultado
-function calculate(id, variables, formula) {
-    const values = {};
-    let allFilled = true;
-
-    variables.forEach(variable => {
-        const input = document.getElementById(`var-${variable}`);
-        const value = parseFloat(input.value);
-        
-        if (isNaN(value)) {
-            allFilled = false;
-        } else {
-            values[variable] = value;
-        }
-    });
-
-    if (!allFilled) {
-        alert('Por favor, preencha todos os campos com números válidos');
-        return;
-    }
-
-    try {
-        // Substituir variáveis na fórmula
-        let processedFormula = formula;
-        
-        // Mostrar a fórmula com os valores substituídos para debug
-        let debugFormula = formula;
-        
-        Object.keys(values).forEach(variable => {
-            const regex = new RegExp('\\b' + variable + '\\b', 'g');
-            processedFormula = processedFormula.replace(regex, values[variable]);
-            debugFormula = debugFormula.replace(regex, `<strong>${values[variable]}</strong>`);
-        });
-
-        // Funções matemáticas disponíveis
-        const sqrt = Math.sqrt;
-        const abs = Math.abs;
-        const sin = Math.sin;
-        const cos = Math.cos;
-        const tan = Math.tan;
-        const log = Math.log;
-        const exp = Math.exp;
-        const pow = Math.pow;
-        const PI = Math.PI;
-
-        // Avaliar fórmula
-        const result = eval(processedFormula);
-
-        // Verificar se o resultado é válido
-        if (!isFinite(result)) {
-            alert('Erro: O resultado não é um número válido. Verifique sua fórmula e os valores inseridos.');
-            return;
-        }
-
-        document.getElementById(`result-${id}`).innerHTML = `
-            <div class="result-box">
-                <h3>Resultado</h3>
-                <div class="value">${result.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                <div style="margin-top: 15px; font-size: 14px; opacity: 0.9;">
-                    Cálculo: ${debugFormula} = ${result.toFixed(2)}
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        alert('Erro ao calcular a fórmula!\n\n' + 
-              'Detalhes: ' + error.message + '\n\n' +
-              'Dicas:\n' +
-              '• Use parênteses para definir ordem: (kmf - kmi) * preço\n' +
-              '• Verifique se os nomes das variáveis estão corretos\n' +
-              '• Use * para multiplicação, não x ou ×');
-    }
+function abrirDB(){
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NOME, DB_VERSAO);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('calculadoras')){
+        const loja = db.createObjectStore('calculadoras', { keyPath:'id' });
+        loja.createIndex('nome','nome',{unique:false});
+        loja.createIndex('categoria','categoria',{unique:false});
+      }
+      if (!db.objectStoreNames.contains('config')){
+        db.createObjectStore('config', { keyPath:'chave' });
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+  return dbPromise;
 }
 
-        // Deletar calculadora
-        function deleteCalculator(id) {
-            if (!confirm('Tem certeza que deseja excluir esta calculadora?')) {
-                return;
-            }
+function dbTodasCalculadoras(){
+  return abrirDB().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction('calculadoras','readonly');
+    const req = tx.objectStore('calculadoras').getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }));
+}
+function dbSalvarCalculadora(calc){
+  return abrirDB().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction('calculadoras','readwrite');
+    tx.objectStore('calculadoras').put(calc);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+function dbExcluirCalculadora(id){
+  return abrirDB().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction('calculadoras','readwrite');
+    tx.objectStore('calculadoras').delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+function dbGetConfig(chave, padrao){
+  return abrirDB().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction('config','readonly');
+    const req = tx.objectStore('config').get(chave);
+    req.onsuccess = () => resolve(req.result ? req.result.valor : padrao);
+    req.onerror = () => reject(req.error);
+  }));
+}
+function dbSetConfig(chave, valor){
+  return abrirDB().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction('config','readwrite');
+    tx.objectStore('config').put({chave, valor});
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
 
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.delete(id);
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+function gerarId(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+}
+function escapeHtml(s){
+  return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+const PALAVRAS_RESERVADAS = ['break','case','catch','class','const','continue','debugger','default','delete','do','else','export','extends','finally','for','function','if','import','in','instanceof','let','new','return','super','switch','this','throw','try','typeof','var','void','while','with','yield','math','number','string','boolean','null','undefined','true','false','arguments','eval'];
+function paraVariavel(texto, existentes){
+  existentes = existentes || [];
+  let base = String(texto||'campo')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'');
+  if (!base) base = 'campo';
+  if (/^[0-9]/.test(base)) base = 'v_' + base;
+  if (PALAVRAS_RESERVADAS.indexOf(base) !== -1) base = base + '_';
+  let nome = base, i = 2;
+  while (existentes.indexOf(nome) !== -1){ nome = base + '_' + i; i++; }
+  return nome;
+}
+function slug(s){
+  const r = String(s||'calculadora').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return r || 'calculadora';
+}
+function inserirNoTextarea(textarea, texto){
+  const inicio = textarea.selectionStart != null ? textarea.selectionStart : textarea.value.length;
+  const fim = textarea.selectionEnd != null ? textarea.selectionEnd : textarea.value.length;
+  const valor = textarea.value;
+  textarea.value = valor.slice(0,inicio) + texto + valor.slice(fim);
+  const novaPos = inicio + texto.length;
+  textarea.focus();
+  textarea.setSelectionRange(novaPos, novaPos);
+}
+function hashCategoria(nome){
+  const s = nome || 'Geral';
+  let h = 0;
+  for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) % 360;
+  return h < 0 ? h + 360 : h;
+}
+function temaEscuroAtivo(){
+  const modo = document.documentElement.dataset.temaModo || 'auto';
+  if (modo === 'escuro') return true;
+  if (modo === 'claro') return false;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function estilosCategoria(nome){
+  const h = hashCategoria(nome);
+  if (temaEscuroAtivo()) return { tab:`hsl(${h} 45% 60%)`, bg:`hsl(${h} 30% 22%)`, texto:`hsl(${h} 55% 80%)` };
+  return { tab:`hsl(${h} 42% 38%)`, bg:`hsl(${h} 45% 94%)`, texto:`hsl(${h} 45% 28%)` };
+}
 
-            request.onsuccess = () => {
-                alert('Calculadora excluída com sucesso!');
-                loadCalculators();
-            };
-        }
-        // Editar calculadora
-        function editCalculator(id) {
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.get(id);
+/* ============================================================
+   TEMA
+   ============================================================ */
+function aplicarTema(modo){
+  if (modo === 'escuro') document.documentElement.dataset.theme = 'dark';
+  else if (modo === 'claro') document.documentElement.dataset.theme = 'light';
+  else delete document.documentElement.dataset.theme;
+  document.documentElement.dataset.temaModo = modo;
+}
+function rotuloTema(){
+  const modo = document.documentElement.dataset.temaModo || 'auto';
+  const nomes = { auto:'Automático', escuro:'Escuro', claro:'Claro' };
+  return 'Tema: ' + nomes[modo] + ' (toque para mudar)';
+}
+async function alternarTema(){
+  const atual = document.documentElement.dataset.temaModo || 'auto';
+  const proximo = atual === 'auto' ? 'escuro' : (atual === 'escuro' ? 'claro' : 'auto');
+  aplicarTema(proximo);
+  await dbSetConfig('tema', proximo);
+  renderLista();
+}
 
-            request.onsuccess = (event) => {
-                const calc = event.target.result;
+/* ============================================================
+   MOTOR DE CÁLCULO
+   ============================================================ */
+function calcularResultados(calc, valoresCampos){
+  const contexto = Object.assign({}, valoresCampos);
+  const resultados = [];
+  for (const r of calc.resultados){
+    const nomes = Object.keys(contexto);
+    const vals = nomes.map(n => contexto[n]);
+    let valor;
+    try {
+      const fn = new Function(...nomes, '"use strict"; return (' + r.formula + ');');
+      valor = fn(...vals);
+    } catch(e){
+      throw new Error('Erro no resultado "' + (r.rotulo||r.id) + '": ' + e.message);
+    }
+    if (valor === undefined){
+      throw new Error('O resultado "' + (r.rotulo||r.id) + '" não retornou nenhum valor.');
+    }
+    if (typeof valor === 'number' && !isFinite(valor)){
+      throw new Error('O resultado "' + (r.rotulo||r.id) + '" ficou inválido (divisão por zero?).');
+    }
+    contexto[r.id] = valor;
+    resultados.push(Object.assign({}, r, { valor }));
+  }
+  return resultados;
+}
+function formatarResultado(r){
+  if (typeof r.valor === 'number'){
+    const casas = Number.isInteger(r.casasDecimais) ? r.casasDecimais : 2;
+    const numFormatado = r.valor.toLocaleString('pt-BR', { minimumFractionDigits:casas, maximumFractionDigits:casas });
+    const unidade = r.unidade ? r.unidade : '';
+    if (!unidade) return numFormatado;
+    return r.unidadePosicao === 'prefixo' ? (unidade + ' ' + numFormatado) : (numFormatado + ' ' + unidade);
+  }
+  return String(r.valor);
+}
+function valoresDeExemplo(campos){
+  const v = {};
+  for (const c of campos){
+    if (c.tipo === 'numero'){
+      const padrao = (c.padrao !== undefined && String(c.padrao).trim() !== '') ? parseFloat(String(c.padrao).replace(',','.')) : NaN;
+      v[c.id] = isNaN(padrao) ? 1 : padrao;
+    } else if (c.tipo === 'selecao'){
+      const op = (c.opcoes||[])[0];
+      if (!op) { v[c.id] = 0; continue; }
+      const n = parseFloat(op.valor);
+      v[c.id] = isNaN(n) ? op.valor : n;
+    } else {
+      v[c.id] = 'texto de exemplo';
+    }
+  }
+  return v;
+}
 
-                document.getElementById('calc-name').value = calc.name;
-                document.getElementById('calc-description').value = calc.description;
-                document.getElementById('calc-variables').value = calc.variables.join(', ');
-                document.getElementById('calc-formula').value = calc.formula;
+/* ============================================================
+   EXEMPLOS PRONTOS
+   ============================================================ */
+function exemplosPadrao(){
+  return [
+    {
+      nome:'Consumo de combustível',
+      descricao:'Consumo (km/l) e custo da viagem a partir da distância percorrida e do combustível abastecido.',
+      categoria:'Veículos',
+      campos:[
+        { id:'distancia', rotulo:'Distância percorrida', tipo:'numero', unidade:'km', padrao:'' },
+        { id:'litros', rotulo:'Combustível abastecido', tipo:'numero', unidade:'L', padrao:'' },
+        { id:'preco_litro', rotulo:'Preço do litro', tipo:'numero', unidade:'R$', padrao:'' }
+      ],
+      resultados:[
+        { id:'consumo', rotulo:'Consumo', formula:'distancia / litros', unidade:'km/l', unidadePosicao:'sufixo', casasDecimais:2 },
+        { id:'custo_total', rotulo:'Custo da viagem', formula:'litros * preco_litro', unidade:'R$', unidadePosicao:'prefixo', casasDecimais:2 },
+        { id:'custo_por_km', rotulo:'Custo por km rodado', formula:'custo_total / distancia', unidade:'R$/km', unidadePosicao:'sufixo', casasDecimais:2 }
+      ]
+    },
+    {
+      nome:'Fahrenheit para Celsius',
+      descricao:'Converte uma temperatura em graus Fahrenheit para Celsius.',
+      categoria:'Conversões',
+      campos:[ { id:'fahrenheit', rotulo:'Temperatura', tipo:'numero', unidade:'°F', padrao:'' } ],
+      resultados:[ { id:'celsius', rotulo:'Em Celsius', formula:'(fahrenheit - 32) * 5 / 9', unidade:'°C', unidadePosicao:'sufixo', casasDecimais:1 } ]
+    },
+    {
+      nome:'Celsius para Fahrenheit',
+      descricao:'Converte uma temperatura em graus Celsius para Fahrenheit.',
+      categoria:'Conversões',
+      campos:[ { id:'celsius', rotulo:'Temperatura', tipo:'numero', unidade:'°C', padrao:'' } ],
+      resultados:[ { id:'fahrenheit', rotulo:'Em Fahrenheit', formula:'(celsius * 9 / 5) + 32', unidade:'°F', unidadePosicao:'sufixo', casasDecimais:1 } ]
+    },
+    {
+      nome:'Índice de Massa Corporal (IMC)',
+      descricao:'Calcula o IMC e mostra a classificação, com base no peso e na altura.',
+      categoria:'Saúde',
+      campos:[
+        { id:'peso', rotulo:'Peso', tipo:'numero', unidade:'kg', padrao:'' },
+        { id:'altura', rotulo:'Altura', tipo:'numero', unidade:'m', padrao:'' }
+      ],
+      resultados:[
+        { id:'imc', rotulo:'IMC', formula:'peso / (altura * altura)', unidade:'', unidadePosicao:'sufixo', casasDecimais:1 },
+        { id:'classificacao', rotulo:'Classificação', formula:"imc < 18.5 ? 'Abaixo do peso' : imc < 25 ? 'Peso normal' : imc < 30 ? 'Sobrepeso' : 'Obesidade'", unidade:'', unidadePosicao:'sufixo', casasDecimais:0 }
+      ]
+    },
+    {
+      nome:'Regra de três simples',
+      descricao:'Se A está para B, quanto vale C para X? Informe A, B e C para calcular X.',
+      categoria:'Matemática',
+      campos:[
+        { id:'a', rotulo:'A', tipo:'numero', unidade:'', padrao:'' },
+        { id:'b', rotulo:'B', tipo:'numero', unidade:'', padrao:'' },
+        { id:'c', rotulo:'C', tipo:'numero', unidade:'', padrao:'' }
+      ],
+      resultados:[ { id:'x', rotulo:'X (resultado)', formula:'(b * c) / a', unidade:'', unidadePosicao:'sufixo', casasDecimais:2 } ]
+    },
+    {
+      nome:'Dividir conta com gorjeta',
+      descricao:'Calcula o valor da gorjeta e quanto cada pessoa deve pagar.',
+      categoria:'Dia a dia',
+      campos:[
+        { id:'valor_conta', rotulo:'Valor da conta', tipo:'numero', unidade:'R$', padrao:'' },
+        { id:'numero_pessoas', rotulo:'Número de pessoas', tipo:'numero', unidade:'', padrao:'1' },
+        { id:'percentual_gorjeta', rotulo:'Gorjeta', tipo:'selecao', unidade:'', opcoes:[
+          {rotulo:'Sem gorjeta',valor:'0'},{rotulo:'10%',valor:'10'},{rotulo:'15%',valor:'15'},{rotulo:'20%',valor:'20'}
+        ] }
+      ],
+      resultados:[
+        { id:'valor_gorjeta', rotulo:'Valor da gorjeta', formula:'valor_conta * (percentual_gorjeta/100)', unidade:'R$', unidadePosicao:'prefixo', casasDecimais:2 },
+        { id:'total', rotulo:'Total com gorjeta', formula:'valor_conta + valor_gorjeta', unidade:'R$', unidadePosicao:'prefixo', casasDecimais:2 },
+        { id:'por_pessoa', rotulo:'Valor por pessoa', formula:'total / numero_pessoas', unidade:'R$', unidadePosicao:'prefixo', casasDecimais:2 }
+      ]
+    }
+  ];
+}
+async function carregarExemplos(){
+  const exemplos = exemplosPadrao();
+  let n = 0;
+  for (const ex of exemplos){
+    const existe = estado.calculadoras.some(c => c.nome === ex.nome);
+    if (existe) continue;
+    const agora = Date.now();
+    const nova = Object.assign({}, ex, { id:gerarId(), criadoEm:agora, atualizadoEm:agora, usos:0, historico:[] });
+    await dbSalvarCalculadora(nova);
+    n++;
+  }
+  await carregarCalculadoras();
+  renderLista();
+  toast(n ? (n + ' exemplo(s) carregado(s)!') : 'Os exemplos já estavam todos na sua lista.');
+}
 
-                // Mudar para aba de criação
-                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                document.querySelector('.tab:first-child').classList.add('active');
-                document.getElementById('create-tab').classList.add('active');
+/* ============================================================
+   NAVEGAÇÃO ENTRE VIEWS
+   ============================================================ */
+function mostrarView(nome, opts){
+  opts = opts || {};
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('ativa'));
+  document.getElementById('view-' + nome).classList.add('ativa');
+  document.getElementById('fab').style.display = (nome === 'lista') ? 'flex' : 'none';
+  if (opts.empilhar !== false) history.pushState({ view: nome }, '');
+  window.scrollTo(0,0);
+}
+window.addEventListener('popstate', () => {
+  mostrarView('lista', { empilhar:false });
+});
 
-                // Modificar botão de salvar para atualizar
-                const saveBtn = document.querySelector('#create-tab .btn');
-                saveBtn.textContent = '💾 Atualizar Calculadora';
-                saveBtn.onclick = () => updateCalculator(id);
-            };
-        }
+/* ============================================================
+   VIEW: LISTA
+   ============================================================ */
+async function carregarCalculadoras(){
+  estado.calculadoras = await dbTodasCalculadoras();
+}
 
-        // Atualizar calculadora
-        function updateCalculator(id) {
-            const name = document.getElementById('calc-name').value.trim();
-            const description = document.getElementById('calc-description').value.trim();
-            const variables = document.getElementById('calc-variables').value.trim();
-            const formula = document.getElementById('calc-formula').value.trim();
+function renderLista(){
+  const termo = (estado.filtroTexto||'').trim().toLowerCase();
+  let lista = estado.calculadoras.filter(c => {
+    const passaTexto = !termo || c.nome.toLowerCase().includes(termo) ||
+      (c.descricao||'').toLowerCase().includes(termo) || (c.categoria||'').toLowerCase().includes(termo);
+    const passaCat = !estado.filtroCategoria || (c.categoria||'Geral') === estado.filtroCategoria;
+    return passaTexto && passaCat;
+  });
+  if (estado.ordenacao === 'nome') lista.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  else if (estado.ordenacao === 'usadas') lista.sort((a,b)=>(b.usos||0)-(a.usos||0));
+  else lista.sort((a,b)=>(b.atualizadoEm||0)-(a.atualizadoEm||0));
 
-            if (!name || !variables || !formula) {
-                alert('Por favor, preencha todos os campos obrigatórios');
-                return;
-            }
+  const categorias = [...new Set(estado.calculadoras.map(c => c.categoria || 'Geral'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const elChips = document.getElementById('chips-categorias');
+  if (!categorias.length){
+    elChips.innerHTML = ''; elChips.style.display = 'none';
+  } else {
+    elChips.style.display = 'flex';
+    let html = '<button class="chip-cat' + (!estado.filtroCategoria?' ativo':'') + '" data-cat="">Todas</button>';
+    html += categorias.map(cat => {
+      const cor = estilosCategoria(cat);
+      const ativo = estado.filtroCategoria === cat;
+      return '<button class="chip-cat' + (ativo?' ativo':'') + '" data-cat="' + escapeHtml(cat) + '" style="--cor-cat:' + cor.tab + '">' + escapeHtml(cat) + '</button>';
+    }).join('');
+    elChips.innerHTML = html;
+  }
 
-            const calculator = {
-                id,
-                name,
-                description,
-                variables: variables.split(',').map(v => v.trim()),
-                formula,
-                updatedAt: new Date().toISOString()
-            };
+  const cont = document.getElementById('lista-cards');
+  if (!estado.calculadoras.length){
+    cont.innerHTML =
+      '<div class="vazio">' +
+        '<p class="vazio-titulo">Nenhuma calculadora ainda</p>' +
+        '<p class="vazio-texto">Crie sua primeira calculadora personalizada ou comece com alguns exemplos prontos, como consumo de combustível e conversão de temperatura.</p>' +
+        '<button class="btn-primario" id="btn-vazio-exemplos">Carregar exemplos</button>' +
+        '<button class="btn-secundario" id="btn-vazio-criar">+ Criar calculadora</button>' +
+      '</div>';
+    document.getElementById('btn-vazio-exemplos').addEventListener('click', carregarExemplos);
+    document.getElementById('btn-vazio-criar').addEventListener('click', () => abrirEditor(null));
+    return;
+  }
+  if (!lista.length){
+    cont.innerHTML = '<div class="vazio"><p class="vazio-titulo">Nada encontrado</p><p class="vazio-texto">Tente outra busca ou categoria.</p></div>';
+    return;
+  }
+  cont.innerHTML = lista.map(c => {
+    const cor = estilosCategoria(c.categoria || 'Geral');
+    return '<div class="calc-card" data-id="' + c.id + '" style="--cor-cat:' + cor.tab + '">' +
+      '<div class="calc-card-corpo">' +
+        '<div class="calc-card-topo">' +
+          '<span class="calc-card-cat" style="color:' + cor.texto + ';background:' + cor.bg + '">' + escapeHtml(c.categoria || 'Geral') + '</span>' +
+          '<button class="icon-btn pequeno" data-acao="menu-card" aria-label="Mais opções">⋮</button>' +
+        '</div>' +
+        '<h3 class="calc-card-nome">' + escapeHtml(c.nome) + '</h3>' +
+        (c.descricao ? '<p class="calc-card-desc">' + escapeHtml(c.descricao) + '</p>' : '') +
+        '<p class="calc-card-meta">' + (c.usos ? ('Usada ' + c.usos + 'x') : 'Ainda não usada') + '</p>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
 
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.put(calculator);
+document.getElementById('lista-cards').addEventListener('click', (e) => {
+  const card = e.target.closest('.calc-card');
+  if (!card) return;
+  const id = card.dataset.id;
+  if (e.target.closest('[data-acao="menu-card"]')){ abrirMenuCard(id); return; }
+  abrirUsar(id);
+});
+document.getElementById('chips-categorias').addEventListener('click', (e) => {
+  const btn = e.target.closest('.chip-cat'); if (!btn) return;
+  estado.filtroCategoria = btn.dataset.cat || null;
+  renderLista();
+});
+document.getElementById('busca').addEventListener('input', (e) => {
+  estado.filtroTexto = e.target.value; renderLista();
+});
+document.getElementById('ordenacao').addEventListener('change', (e) => {
+  estado.ordenacao = e.target.value; renderLista();
+});
+document.getElementById('fab').addEventListener('click', () => abrirEditor(null));
+document.getElementById('btn-menu').addEventListener('click', () => {
+  abrirSheetAcoes('Menu', [
+    { rotulo:'Exportar todas as calculadoras', acao: exportarTodas },
+    { rotulo:'Importar arquivo', acao: () => document.getElementById('input-importar').click() },
+    { rotulo:'Carregar exemplos', acao: carregarExemplos },
+    { rotulo: rotuloTema(), acao: alternarTema }
+  ]);
+});
+document.getElementById('input-importar').addEventListener('change', async (e) => {
+  const arquivo = e.target.files[0];
+  if (arquivo) await tratarArquivoImportado(arquivo);
+  e.target.value = '';
+});
 
-            request.onsuccess = () => {
-                alert('Calculadora atualizada com sucesso!');
-                resetForm();
-                switchTab('saved');
-            };
-        }
+function abrirMenuCard(id){
+  const calc = estado.calculadoras.find(c => c.id === id);
+  if (!calc) return;
+  abrirSheetAcoes(calc.nome, [
+    { rotulo:'Usar', acao: () => abrirUsar(id) },
+    { rotulo:'Editar', acao: () => abrirEditor(id) },
+    { rotulo:'Duplicar', acao: () => duplicarCalculadora(id) },
+    { rotulo:'Exportar', acao: () => exportarUma(calc) },
+    { rotulo:'Excluir', perigo:true, acao: () => confirmarExclusao(id) }
+  ]);
+}
+async function duplicarCalculadora(id){
+  const calc = estado.calculadoras.find(c => c.id === id);
+  if (!calc) return;
+  const copia = JSON.parse(JSON.stringify(calc));
+  const agora = Date.now();
+  copia.id = gerarId(); copia.nome = calc.nome + ' (cópia)';
+  copia.usos = 0; copia.historico = []; copia.criadoEm = agora; copia.atualizadoEm = agora;
+  await dbSalvarCalculadora(copia);
+  await carregarCalculadoras();
+  renderLista();
+  toast('Calculadora duplicada.');
+}
+function confirmarExclusao(id){
+  const calc = estado.calculadoras.find(c => c.id === id);
+  if (!calc) return;
+  abrirConfirmacao('Excluir calculadora', 'Tem certeza que deseja excluir "' + calc.nome + '"? Essa ação não pode ser desfeita.', async () => {
+    await dbExcluirCalculadora(id);
+    await carregarCalculadoras();
+    const estavaUsando = estado.usando === id;
+    renderLista();
+    toast('Calculadora excluída.');
+    if (estavaUsando) history.back();
+  });
+}
 
-        // Resetar formulário
-        function resetForm() {
-            document.getElementById('calc-name').value = '';
-            document.getElementById('calc-description').value = '';
-            document.getElementById('calc-variables').value = '';
-            document.getElementById('calc-formula').value = '';
+/* ============================================================
+   EXPORTAR / IMPORTAR
+   ============================================================ */
+function baixarJSON(objeto, nomeArquivo){
+  const blob = new Blob([JSON.stringify(objeto, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArquivo;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function exportarUma(calc){
+  const envelope = { tipo:'calculadora-unica', versao:1, exportadoEm:new Date().toISOString(), calculadora:calc };
+  baixarJSON(envelope, 'calculadora-' + slug(calc.nome) + '.json');
+  toast('Calculadora exportada.');
+}
+function exportarTodas(){
+  if (!estado.calculadoras.length){ toast('Não há calculadoras para exportar.', true); return; }
+  const envelope = { tipo:'calculadoras-backup', versao:1, exportadoEm:new Date().toISOString(), calculadoras:estado.calculadoras };
+  const dataStr = new Date().toISOString().slice(0,10);
+  baixarJSON(envelope, 'calculadoras-backup-' + dataStr + '.json');
+  toast(estado.calculadoras.length + ' calculadora(s) exportada(s).');
+}
+function assinatura(calc){
+  return ((calc && calc.resultados) || []).map(r => r.formula).join('|');
+}
+async function tratarArquivoImportado(arquivo){
+  try {
+    const texto = await arquivo.text();
+    const dados = JSON.parse(texto);
+    let lista = [];
+    if (Array.isArray(dados)) lista = dados;
+    else if (dados && dados.tipo === 'calculadoras-backup' && Array.isArray(dados.calculadoras)) lista = dados.calculadoras;
+    else if (dados && dados.tipo === 'calculadora-unica' && dados.calculadora) lista = [dados.calculadora];
+    else if (dados && dados.nome && Array.isArray(dados.campos)) lista = [dados];
+    else throw new Error('Formato de arquivo não reconhecido.');
 
-            const saveBtn = document.querySelector('#create-tab .btn');
-            saveBtn.textContent = '💾 Salvar Calculadora';
-            saveBtn.onclick = saveCalculator;
-        }
+    let importadas = 0, ignoradas = 0;
+    for (const item of lista){
+      if (!item || !item.nome || !Array.isArray(item.campos) || !Array.isArray(item.resultados)){ ignoradas++; continue; }
+      const jaExiste = estado.calculadoras.some(c => c.nome === item.nome && assinatura(c) === assinatura(item));
+      if (jaExiste){ ignoradas++; continue; }
+      const agora = Date.now();
+      const nova = Object.assign({}, item, {
+        id:gerarId(), criadoEm:agora, atualizadoEm:agora,
+        usos:item.usos||0, historico:item.historico||[]
+      });
+      await dbSalvarCalculadora(nova);
+      importadas++;
+    }
+    await carregarCalculadoras();
+    renderLista();
+    toast(importadas + ' importada(s)' + (ignoradas ? (', ' + ignoradas + ' ignorada(s) (já existiam)') : '') + '.');
+  } catch(e){
+    toast('Erro ao importar: ' + e.message, true);
+  }
+}
 
-        // Exportar calculadoras
-        function exportCalculators() {
-            const transaction = db.transaction([STORE_NAME], 'readonly');
-            const objectStore = transaction.objectStore(STORE_NAME);
-            const request = objectStore.getAll();
+/* ============================================================
+   VIEW: EDITOR (criar/editar calculadora)
+   ============================================================ */
+function novoCampo(existentesIds){
+  return { id: paraVariavel('campo', existentesIds), rotulo:'', tipo:'numero', unidade:'', padrao:'' };
+}
+function novoResultado(existentesIds){
+  return { id: paraVariavel('resultado', existentesIds), rotulo:'', formula:'', unidade:'', unidadePosicao:'sufixo', casasDecimais:2 };
+}
 
-            request.onsuccess = (event) => {
-                const calculators = event.target.result;
+function abrirEditor(id, opts){
+  opts = opts || {};
+  voltarAlvoEditor = opts.voltarPara || 'lista';
+  if (id){
+    const calc = estado.calculadoras.find(c => c.id === id);
+    const clone = JSON.parse(JSON.stringify(calc));
+    clone.campos.forEach(c => { c._variavelManual = true; });
+    clone.resultados.forEach(r => { r._variavelManual = true; });
+    estado.rascunho = clone;
+  } else {
+    estado.rascunho = { id:null, nome:'', descricao:'', categoria:'', campos:[], resultados:[], usos:0, historico:[] };
+  }
+  document.getElementById('editor-titulo').textContent = id ? 'Editar calculadora' : 'Nova calculadora';
+  renderEditor();
+  mostrarView('editor', { empilhar: opts.empilhar !== false });
+}
+function fecharEditor(){
+  if (voltarAlvoEditor === 'usar' && estado.usando){
+    mostrarView('usar', { empilhar:false });
+  } else {
+    history.back();
+  }
+}
+function popularDatalistCategorias(){
+  const categorias = [...new Set(estado.calculadoras.map(c => c.categoria).filter(Boolean))];
+  document.getElementById('lista-categorias').innerHTML = categorias.map(c => '<option value="' + escapeHtml(c) + '">').join('');
+}
+function renderEditor(){
+  const r = estado.rascunho;
+  document.getElementById('ed-nome').value = r.nome || '';
+  document.getElementById('ed-descricao').value = r.descricao || '';
+  document.getElementById('ed-categoria').value = r.categoria || '';
+  popularDatalistCategorias();
+  renderCamposEditor();
+  renderResultadosEditor();
+  document.getElementById('area-teste').innerHTML = '';
+}
 
-                if (calculators.length === 0) {
-                    alert('Nenhuma calculadora para exportar');
-                    return;
-                }
+function templateCampoEditor(campo, i){
+  let extra = '';
+  if (campo.tipo === 'numero'){
+    extra = '<div class="linha-2col">' +
+      '<label class="campo-label">Unidade (opcional)<input type="text" data-prop="unidade" value="' + escapeHtml(campo.unidade||'') + '" placeholder="Ex.: km, L, kg"></label>' +
+      '<label class="campo-label">Valor padrão (opcional)<input type="text" inputmode="decimal" data-prop="padrao" value="' + escapeHtml(campo.padrao!==undefined?campo.padrao:'') + '" placeholder="Ex.: 0"></label>' +
+    '</div>';
+  } else if (campo.tipo === 'selecao'){
+    const opcoes = campo.opcoes || [];
+    extra = '<div class="opcoes-lista">' +
+      opcoes.map((op,j) =>
+        '<div class="opcao-row">' +
+          '<input type="text" data-opcao-prop="rotulo" data-opcao-idx="' + j + '" value="' + escapeHtml(op.rotulo) + '" placeholder="Rótulo (ex.: 10%)">' +
+          '<input type="text" data-opcao-prop="valor" data-opcao-idx="' + j + '" value="' + escapeHtml(op.valor) + '" placeholder="Valor (ex.: 10)" class="mono">' +
+          '<button type="button" data-acao="remover-opcao" data-opcao-idx="' + j + '">✕</button>' +
+        '</div>'
+      ).join('') +
+      '<button type="button" class="btn-tracejado pequeno" data-acao="add-opcao">+ Adicionar opção</button>' +
+    '</div>';
+  }
+  return '<div class="item-row" data-idx="' + i + '">' +
+    '<div class="item-row-topo">' +
+      '<span class="item-num">Campo ' + (i+1) + '</span>' +
+      '<div class="item-row-acoes">' +
+        '<button type="button" data-acao="subir-campo" title="Mover para cima">↑</button>' +
+        '<button type="button" data-acao="descer-campo" title="Mover para baixo">↓</button>' +
+        '<button type="button" data-acao="remover-campo" class="cor-perigo" title="Remover">✕</button>' +
+      '</div>' +
+    '</div>' +
+    '<label class="campo-label">Rótulo (o que a pessoa vê)<input type="text" data-prop="rotulo" value="' + escapeHtml(campo.rotulo) + '" placeholder="Ex.: Distância percorrida"></label>' +
+    '<div class="linha-2col">' +
+      '<label class="campo-label">Variável na fórmula<input type="text" data-prop="variavel" value="' + escapeHtml(campo.id) + '" class="mono"></label>' +
+      '<label class="campo-label">Tipo<select data-prop="tipo">' +
+        '<option value="numero"' + (campo.tipo==='numero'?' selected':'') + '>Número</option>' +
+        '<option value="selecao"' + (campo.tipo==='selecao'?' selected':'') + '>Lista (seleção)</option>' +
+        '<option value="texto"' + (campo.tipo==='texto'?' selected':'') + '>Texto</option>' +
+      '</select></label>' +
+    '</div>' +
+    extra +
+  '</div>';
+}
+function renderCamposEditor(){
+  const cont = document.getElementById('lista-campos');
+  const campos = estado.rascunho.campos;
+  cont.innerHTML = campos.length
+    ? campos.map((c,i) => templateCampoEditor(c,i)).join('')
+    : '<p class="vazio-mini">Nenhum campo ainda. Adicione o primeiro campo abaixo.</p>';
+}
 
-                const dataStr = JSON.stringify(calculators, null, 2);
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `calculadoras_${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-                URL.revokeObjectURL(url);
+function templateResultadoEditor(r, i, disponiveis){
+  const chips = disponiveis.map(v => '<button type="button" class="chip" data-var="' + escapeHtml(v) + '">' + escapeHtml(v) + '</button>').join('');
+  return '<div class="item-row" data-idx="' + i + '">' +
+    '<div class="item-row-topo">' +
+      '<span class="item-num">Resultado ' + (i+1) + '</span>' +
+      '<div class="item-row-acoes">' +
+        '<button type="button" data-acao="subir-resultado" title="Mover para cima">↑</button>' +
+        '<button type="button" data-acao="descer-resultado" title="Mover para baixo">↓</button>' +
+        '<button type="button" data-acao="remover-resultado" class="cor-perigo" title="Remover">✕</button>' +
+      '</div>' +
+    '</div>' +
+    '<label class="campo-label">Rótulo do resultado<input type="text" data-prop="rotulo" value="' + escapeHtml(r.rotulo) + '" placeholder="Ex.: Custo da viagem"></label>' +
+    '<label class="campo-label">Variável (para usar em outros resultados)<input type="text" data-prop="variavel" value="' + escapeHtml(r.id) + '" class="mono"></label>' +
+    '<label class="campo-label">Fórmula<textarea data-prop="formula" class="mono" rows="2" id="formula-' + i + '" placeholder="Ex.: distancia / litros">' + escapeHtml(r.formula) + '</textarea></label>' +
+    (disponiveis.length ? '<div class="chips-vars">' + chips + '</div>' : '<p class="dica" style="margin-top:-6px">Adicione campos acima para poder usá-los aqui.</p>') +
+    '<div class="linha-3col">' +
+      '<label class="campo-label">Unidade<input type="text" data-prop="unidade" value="' + escapeHtml(r.unidade||'') + '" placeholder="Ex.: R$, km/l"></label>' +
+      '<label class="campo-label">Posição<select data-prop="unidadePosicao">' +
+        '<option value="sufixo"' + (r.unidadePosicao!=='prefixo'?' selected':'') + '>Depois</option>' +
+        '<option value="prefixo"' + (r.unidadePosicao==='prefixo'?' selected':'') + '>Antes</option>' +
+      '</select></label>' +
+      '<label class="campo-label">Casas decimais<input type="number" min="0" max="6" data-prop="casasDecimais" value="' + (r.casasDecimais!==undefined?r.casasDecimais:2) + '"></label>' +
+    '</div>' +
+  '</div>';
+}
+function renderResultadosEditor(){
+  const cont = document.getElementById('lista-resultados');
+  const idsCampos = estado.rascunho.campos.map(c => c.id);
+  const resultados = estado.rascunho.resultados;
+  cont.innerHTML = resultados.length
+    ? resultados.map((r,i) => {
+        const disponiveis = idsCampos.concat(resultados.slice(0,i).map(rr => rr.id));
+        return templateResultadoEditor(r,i,disponiveis);
+      }).join('')
+    : '<p class="vazio-mini">Nenhum resultado ainda. Adicione o primeiro resultado abaixo.</p>';
+}
 
-                alert(`${calculators.length} calculadora(s) exportada(s) com sucesso!`);
-            };
-        }
+/* --- eventos: campos --- */
+document.getElementById('lista-campos').addEventListener('input', (e) => {
+  const row = e.target.closest('.item-row'); if (!row) return;
+  const i = +row.dataset.idx;
+  const campo = estado.rascunho.campos[i]; if (!campo) return;
+  const prop = e.target.dataset.prop;
+  if (prop === 'rotulo'){
+    campo.rotulo = e.target.value;
+    if (!campo._variavelManual){
+      const idsExistentes = estado.rascunho.campos.map((c,j) => j===i ? null : c.id).filter(Boolean);
+      campo.id = paraVariavel(e.target.value, idsExistentes);
+      const inputVar = row.querySelector('[data-prop="variavel"]');
+      if (inputVar) inputVar.value = campo.id;
+      renderResultadosEditor();
+    }
+  } else if (prop === 'variavel'){
+    campo._variavelManual = true;
+    const idsExistentes = estado.rascunho.campos.map((c,j) => j===i ? null : c.id).filter(Boolean);
+    campo.id = paraVariavel(e.target.value, idsExistentes);
+  } else if (prop){
+    campo[prop] = e.target.value;
+  } else if (e.target.dataset.opcaoProp){
+    const j = +e.target.dataset.opcaoIdx;
+    if (campo.opcoes && campo.opcoes[j]) campo.opcoes[j][e.target.dataset.opcaoProp] = e.target.value;
+  }
+});
+document.getElementById('lista-campos').addEventListener('change', (e) => {
+  const row = e.target.closest('.item-row'); if (!row) return;
+  const i = +row.dataset.idx;
+  const campo = estado.rascunho.campos[i]; if (!campo) return;
+  if (e.target.dataset.prop === 'tipo'){
+    campo.tipo = e.target.value;
+    if (campo.tipo === 'selecao' && !campo.opcoes) campo.opcoes = [{rotulo:'',valor:''}];
+    renderCamposEditor();
+    renderResultadosEditor();
+  }
+});
+document.getElementById('lista-campos').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-acao]'); if (!btn) return;
+  const row = e.target.closest('.item-row'); const i = +row.dataset.idx;
+  const campos = estado.rascunho.campos;
+  const acao = btn.dataset.acao;
+  if (acao === 'remover-campo'){ campos.splice(i,1); renderCamposEditor(); renderResultadosEditor(); }
+  else if (acao === 'subir-campo' && i > 0){ const c = campos.splice(i,1)[0]; campos.splice(i-1,0,c); renderCamposEditor(); }
+  else if (acao === 'descer-campo' && i < campos.length-1){ const c = campos.splice(i,1)[0]; campos.splice(i+1,0,c); renderCamposEditor(); }
+  else if (acao === 'add-opcao'){ campos[i].opcoes = campos[i].opcoes || []; campos[i].opcoes.push({rotulo:'',valor:''}); renderCamposEditor(); }
+  else if (acao === 'remover-opcao'){ const j = +btn.dataset.opcaoIdx; campos[i].opcoes.splice(j,1); renderCamposEditor(); }
+});
 
-        // Importar calculadoras
-        function importCalculators(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+/* --- eventos: resultados --- */
+document.getElementById('lista-resultados').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  const row = e.target.closest('.item-row'); if (!row) return;
+  const i = +row.dataset.idx;
+  if (chip){
+    const ta = document.getElementById('formula-' + i);
+    inserirNoTextarea(ta, chip.dataset.var);
+    estado.rascunho.resultados[i].formula = ta.value;
+    return;
+  }
+  const btn = e.target.closest('button[data-acao]'); if (!btn) return;
+  const resultados = estado.rascunho.resultados;
+  const acao = btn.dataset.acao;
+  if (acao === 'remover-resultado'){ resultados.splice(i,1); renderResultadosEditor(); }
+  else if (acao === 'subir-resultado' && i > 0){ const r = resultados.splice(i,1)[0]; resultados.splice(i-1,0,r); renderResultadosEditor(); }
+  else if (acao === 'descer-resultado' && i < resultados.length-1){ const r = resultados.splice(i,1)[0]; resultados.splice(i+1,0,r); renderResultadosEditor(); }
+});
+document.getElementById('lista-resultados').addEventListener('input', (e) => {
+  const row = e.target.closest('.item-row'); if (!row) return;
+  const i = +row.dataset.idx;
+  const r = estado.rascunho.resultados[i]; if (!r) return;
+  const prop = e.target.dataset.prop; if (!prop) return;
+  if (prop === 'variavel'){
+    r._variavelManual = true;
+    const idsExistentes = estado.rascunho.campos.map(c => c.id).concat(
+      estado.rascunho.resultados.map((rr,j) => j===i ? null : rr.id).filter(Boolean)
+    );
+    r.id = paraVariavel(e.target.value, idsExistentes);
+  } else if (prop === 'rotulo'){
+    r.rotulo = e.target.value;
+    if (!r._variavelManual){
+      const idsExistentes = estado.rascunho.campos.map(c => c.id).concat(
+        estado.rascunho.resultados.map((rr,j) => j===i ? null : rr.id).filter(Boolean)
+      );
+      r.id = paraVariavel(e.target.value, idsExistentes);
+      const inputVar = row.querySelector('[data-prop="variavel"]');
+      if (inputVar) inputVar.value = r.id;
+    }
+  } else if (prop === 'casasDecimais'){
+    r.casasDecimais = parseInt(e.target.value, 10);
+    if (isNaN(r.casasDecimais)) r.casasDecimais = 0;
+  } else {
+    r[prop] = e.target.value;
+  }
+});
+document.getElementById('lista-resultados').addEventListener('change', (e) => {
+  const row = e.target.closest('.item-row'); if (!row) return;
+  const i = +row.dataset.idx;
+  if (e.target.dataset.prop === 'unidadePosicao') estado.rascunho.resultados[i].unidadePosicao = e.target.value;
+});
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const calculators = JSON.parse(e.target.result);
+document.getElementById('btn-add-campo').addEventListener('click', () => {
+  const ids = estado.rascunho.campos.map(c => c.id);
+  estado.rascunho.campos.push(novoCampo(ids));
+  renderCamposEditor();
+});
+document.getElementById('btn-add-resultado').addEventListener('click', () => {
+  const ids = estado.rascunho.campos.map(c => c.id).concat(estado.rascunho.resultados.map(r => r.id));
+  estado.rascunho.resultados.push(novoResultado(ids));
+  renderResultadosEditor();
+});
+document.getElementById('ed-nome').addEventListener('input', (e) => { estado.rascunho.nome = e.target.value; });
+document.getElementById('ed-descricao').addEventListener('input', (e) => { estado.rascunho.descricao = e.target.value; });
+document.getElementById('ed-categoria').addEventListener('input', (e) => { estado.rascunho.categoria = e.target.value; });
 
-                    if (!Array.isArray(calculators)) {
-                        alert('Arquivo inválido');
-                        return;
-                    }
+document.getElementById('btn-testar').addEventListener('click', () => {
+  const area = document.getElementById('area-teste');
+  try {
+    const valores = valoresDeExemplo(estado.rascunho.campos);
+    const resultados = calcularResultados(estado.rascunho, valores);
+    const resumo = resultados.map(r => escapeHtml(r.rotulo + ': ' + formatarResultado(r))).join(' · ');
+    area.innerHTML = '<div class="teste-ok">Funcionou! ' + resumo + '</div>';
+  } catch(e){
+    area.innerHTML = '<div class="teste-erro">' + escapeHtml(e.message) + '</div>';
+  }
+});
+document.getElementById('btn-editor-cancelar').addEventListener('click', fecharEditor);
+document.getElementById('btn-editor-voltar').addEventListener('click', fecharEditor);
+document.getElementById('btn-editor-salvar').addEventListener('click', async () => {
+  const r = estado.rascunho;
+  r.nome = document.getElementById('ed-nome').value.trim();
+  r.descricao = document.getElementById('ed-descricao').value.trim();
+  r.categoria = document.getElementById('ed-categoria').value.trim() || 'Geral';
 
-                    const transaction = db.transaction([STORE_NAME], 'readwrite');
-                    const objectStore = transaction.objectStore(STORE_NAME);
+  if (!r.nome){ toast('Dê um nome para a calculadora.', true); document.getElementById('ed-nome').focus(); return; }
+  if (!r.campos.length || !r.resultados.length){ toast('Adicione ao menos um campo e um resultado.', true); return; }
+  for (const c of r.campos){ if (!c.rotulo.trim()){ toast('Preencha o rótulo de todos os campos.', true); return; } }
+  for (const res of r.resultados){
+    if (!res.rotulo.trim()){ toast('Preencha o rótulo de todos os resultados.', true); return; }
+    if (!res.formula.trim()){ toast('Preencha a fórmula de todos os resultados.', true); return; }
+  }
+  try {
+    calcularResultados(r, valoresDeExemplo(r.campos));
+  } catch(e){
+    toast(e.message, true);
+    return;
+  }
+  const agora = Date.now();
+  if (!r.id){ r.id = gerarId(); r.criadoEm = agora; r.usos = 0; r.historico = []; }
+  r.atualizadoEm = agora;
+  const limpo = JSON.parse(JSON.stringify(r, (k,v) => (k === '_variavelManual') ? undefined : v));
+  await dbSalvarCalculadora(limpo);
+  await carregarCalculadoras();
+  toast('Calculadora salva!');
+  fecharEditor();
+  renderLista();
+});
 
-                    let imported = 0;
-                    calculators.forEach(calc => {
-                        delete calc.id; // Remove ID para criar novos registros
-                        const request = objectStore.add(calc);
-                        request.onsuccess = () => imported++;
-                    });
+/* ============================================================
+   VIEW: USAR
+   ============================================================ */
+function templateCampoUso(campo){
+  const rotuloComUnidade = campo.unidade ? (escapeHtml(campo.rotulo) + ' (' + escapeHtml(campo.unidade) + ')') : escapeHtml(campo.rotulo);
+  if (campo.tipo === 'selecao'){
+    const opcoes = (campo.opcoes||[]).map(o => '<option value="' + escapeHtml(o.valor) + '">' + escapeHtml(o.rotulo) + '</option>').join('');
+    return '<label class="campo-label">' + rotuloComUnidade + '<select data-campo="' + campo.id + '">' + opcoes + '</select></label>';
+  }
+  if (campo.tipo === 'texto'){
+    return '<label class="campo-label">' + rotuloComUnidade + '<input type="text" data-campo="' + campo.id + '"></label>';
+  }
+  return '<label class="campo-label">' + rotuloComUnidade + '<input type="text" inputmode="decimal" data-campo="' + campo.id + '" value="' + escapeHtml(campo.padrao!==undefined?campo.padrao:'') + '" placeholder="0"></label>';
+}
+function abrirUsar(id){
+  const calc = estado.calculadoras.find(c => c.id === id);
+  if (!calc) return;
+  estado.usando = id;
+  document.getElementById('usar-titulo').textContent = calc.nome;
+  const elDesc = document.getElementById('usar-descricao');
+  elDesc.textContent = calc.descricao || '';
+  elDesc.style.display = calc.descricao ? 'block' : 'none';
+  document.getElementById('form-usar').innerHTML = calc.campos.map(templateCampoUso).join('');
+  const elRes = document.getElementById('area-resultados');
+  elRes.innerHTML = ''; elRes.classList.remove('mostrar');
+  renderHistorico(calc);
+  mostrarView('usar');
+}
+function renderResultadosView(resultados){
+  const principal = resultados[0];
+  const resto = resultados.slice(1);
+  let html = '<div class="resultado-lcd principal">' +
+    '<div class="lcd-rotulo">' + escapeHtml(principal.rotulo) + '</div>' +
+    '<div class="lcd-valor">' + escapeHtml(formatarResultado(principal)) + '</div>' +
+  '</div>';
+  if (resto.length){
+    html += '<div class="resultados-secundarios">' + resto.map(r =>
+      '<div class="resultado-lcd secundario">' +
+        '<div class="lcd-rotulo">' + escapeHtml(r.rotulo) + '</div>' +
+        '<div class="lcd-valor">' + escapeHtml(formatarResultado(r)) + '</div>' +
+      '</div>'
+    ).join('') + '</div>';
+  }
+  const el = document.getElementById('area-resultados');
+  el.innerHTML = html;
+  requestAnimationFrame(() => el.classList.add('mostrar'));
+}
+function renderHistorico(calc){
+  const hist = calc.historico || [];
+  const el = document.getElementById('area-historico');
+  if (!hist.length){ el.innerHTML = ''; return; }
+  el.innerHTML = '<details class="historico-detalhes">' +
+    '<summary>Últimos cálculos (' + hist.length + ')</summary>' +
+    '<div class="historico-lista">' +
+      hist.slice().reverse().map(h =>
+        '<div class="historico-item">' +
+          '<div class="historico-data">' + new Date(h.quando).toLocaleString('pt-BR') + '</div>' +
+          '<div class="historico-resumo">' + h.resultados.map(r => escapeHtml(r.rotulo + ': ' + r.textoFormatado)).join(' · ') + '</div>' +
+        '</div>'
+      ).join('') +
+    '</div>' +
+    '<button type="button" class="btn-fantasma pequeno" id="btn-limpar-historico" style="padding:8px 0">Limpar histórico</button>' +
+  '</details>';
+  const btnLimpar = document.getElementById('btn-limpar-historico');
+  if (btnLimpar) btnLimpar.addEventListener('click', async () => {
+    calc.historico = [];
+    await dbSalvarCalculadora(calc);
+    renderHistorico(calc);
+    toast('Histórico limpo.');
+  });
+}
+async function aoClicarCalcular(){
+  const calc = estado.calculadoras.find(c => c.id === estado.usando);
+  if (!calc) return;
+  const valores = {};
+  const invalidos = [];
+  for (const campo of calc.campos){
+    const el = document.querySelector('#form-usar [data-campo="' + campo.id + '"]');
+    if (!el) continue;
+    el.classList.remove('erro');
+    if (campo.tipo === 'numero'){
+      const bruto = el.value.trim();
+      if (bruto === ''){
+        const padrao = (campo.padrao !== undefined && String(campo.padrao).trim() !== '') ? parseFloat(String(campo.padrao).replace(',','.')) : NaN;
+        if (!isNaN(padrao)) valores[campo.id] = padrao;
+        else { el.classList.add('erro'); invalidos.push(campo.id); valores[campo.id] = 0; }
+      } else {
+        const n = parseFloat(bruto.replace(',','.'));
+        if (isNaN(n)){ el.classList.add('erro'); invalidos.push(campo.id); valores[campo.id] = 0; }
+        else valores[campo.id] = n;
+      }
+    } else if (campo.tipo === 'selecao'){
+      const bruto = el.value;
+      const n = parseFloat(bruto);
+      valores[campo.id] = isNaN(n) ? bruto : n;
+    } else {
+      valores[campo.id] = el.value;
+    }
+  }
+  if (invalidos.length){ toast('Preencha os campos destacados.', true); return; }
+  try {
+    const resultados = calcularResultados(calc, valores);
+    renderResultadosView(resultados);
+    calc.usos = (calc.usos||0) + 1;
+    calc.historico = calc.historico || [];
+    calc.historico.push({
+      quando: Date.now(),
+      resultados: resultados.map(r => ({ rotulo:r.rotulo, textoFormatado:formatarResultado(r) }))
+    });
+    if (calc.historico.length > 20) calc.historico = calc.historico.slice(-20);
+    await dbSalvarCalculadora(calc);
+    renderHistorico(calc);
+  } catch(e){
+    toast(e.message, true);
+  }
+}
+document.getElementById('btn-calcular').addEventListener('click', aoClicarCalcular);
+document.getElementById('btn-usar-voltar').addEventListener('click', () => history.back());
+document.getElementById('btn-usar-menu').addEventListener('click', () => {
+  const id = estado.usando;
+  const calc = estado.calculadoras.find(c => c.id === id);
+  if (!calc) return;
+  abrirSheetAcoes(calc.nome, [
+    { rotulo:'Editar', acao: () => abrirEditor(id, { voltarPara:'usar', empilhar:false }) },
+    { rotulo:'Duplicar', acao: () => duplicarCalculadora(id) },
+    { rotulo:'Exportar', acao: () => exportarUma(calc) },
+    { rotulo:'Excluir', perigo:true, acao: () => confirmarExclusao(id) }
+  ]);
+});
 
-                    transaction.oncomplete = () => {
-                        alert(`${imported} calculadora(s) importada(s) com sucesso!`);
-                        loadCalculators();
-                        event.target.value = ''; // Limpar input
-                    };
+/* ============================================================
+   SHEET (menu inferior) / CONFIRMAÇÃO / TOAST
+   ============================================================ */
+function abrirSheetAcoes(titulo, itens){
+  const overlay = document.getElementById('overlay');
+  const conteudo = document.getElementById('sheet-conteudo');
+  conteudo.innerHTML = '<div class="sheet-titulo">' + escapeHtml(titulo) + '</div>' +
+    itens.map((it,idx) => '<button type="button" class="sheet-item' + (it.perigo?' cor-perigo':'') + '" data-idx="' + idx + '">' + escapeHtml(it.rotulo) + '</button>').join('') +
+    '<button type="button" class="sheet-item sheet-cancelar" data-fechar="1">Cancelar</button>';
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add('mostrar'));
+  conteudo.onclick = (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    if (btn.dataset.fechar){ fecharSheet(); return; }
+    const idx = +btn.dataset.idx;
+    fecharSheet();
+    setTimeout(() => itens[idx].acao(), 150);
+  };
+}
+function abrirConfirmacao(titulo, mensagem, aoConfirmar, textoBotao){
+  textoBotao = textoBotao || 'Excluir';
+  const overlay = document.getElementById('overlay');
+  const conteudo = document.getElementById('sheet-conteudo');
+  conteudo.innerHTML = '<div class="sheet-titulo">' + escapeHtml(titulo) + '</div>' +
+    '<p class="sheet-mensagem">' + escapeHtml(mensagem) + '</p>' +
+    '<button type="button" class="sheet-item cor-perigo" data-conf="1">' + escapeHtml(textoBotao) + '</button>' +
+    '<button type="button" class="sheet-item sheet-cancelar" data-fechar="1">Cancelar</button>';
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add('mostrar'));
+  conteudo.onclick = (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    if (btn.dataset.fechar){ fecharSheet(); return; }
+    if (btn.dataset.conf){ fecharSheet(); setTimeout(aoConfirmar, 150); }
+  };
+}
+function fecharSheet(){
+  const overlay = document.getElementById('overlay');
+  overlay.classList.remove('mostrar');
+  setTimeout(() => { overlay.hidden = true; }, 200);
+}
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'overlay') fecharSheet();
+});
+let toastTimer = null;
+function toast(msg, erro){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('erro', !!erro);
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('mostrar'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('mostrar');
+    setTimeout(() => { el.hidden = true; }, 200);
+  }, 2800);
+}
 
-                } catch (error) {
-                    alert('Erro ao importar arquivo: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-        }
-        // Filtrar calculadoras
-        function filterCalculators(searchValue) {
-            const clearBtn = document.getElementById('clear-search-btn');
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+async function iniciar(){
+  try {
+    aplicarTema(await dbGetConfig('tema','auto'));
+  } catch(e){ aplicarTema('auto'); }
+  try {
+    await carregarCalculadoras();
+  } catch(e){
+    console.error(e);
+    toast('Não foi possível abrir o armazenamento local neste navegador.', true);
+  }
+  renderLista();
+  mostrarView('lista', { empilhar:false });
+}
+document.addEventListener('DOMContentLoaded', iniciar);
 
-            // Mostrar/ocultar botão X
-            if (searchValue.trim()) {
-                clearBtn.style.display = 'block';
-            } else {
-                clearBtn.style.display = 'none';
-            }
-
-            loadCalculators();
-        }
-
-        // Limpar busca
-        function clearSearch() {
-            document.getElementById('search-bar').value = '';
-            document.getElementById('clear-search-btn').style.display = 'none';
-            loadCalculators();
-        }
-
-        // Inicializar ao carregar a página
-        window.onload = initDB;
-    </script>
+})();
+</script>
 </body>
-
 </html>
